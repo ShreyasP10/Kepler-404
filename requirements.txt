@@ -1,0 +1,7 @@
+flask
+flask-cors
+rasterio
+opencv-python
+numpy
+pillow
+# torch  

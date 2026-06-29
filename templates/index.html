@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Kepler-404 — AI-driven super-resolution and colorization of Landsat 9 Band 10 TIR imagery. Upscaling 200m thermal data to 100m with generative AI.">
+  <meta name="theme-color" content="#0a0a0a">
+  <title>Kepler 404 | TIR Super-Resolution & Colorization</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body data-theme="dark">
+
+  <!-- Custom cursor -->
+  <div class="cursor-dot" aria-hidden="true"></div>
+  <div class="cursor-outline" aria-hidden="true"></div>
+
+  <!-- Scroll progress bar -->
+  <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="header" id="header">
+    <div class="container header-inner">
+      <a href="#hero" class="logo" aria-label="Kepler 404 home">
+        <span class="logo-mark">⬢</span> KEPLER<span class="logo-accent">404</span>
+      </a>
+
+      <nav class="nav-desktop" aria-label="Primary">
+        <a href="#hero" class="active">Home</a>
+        <a href="#about">About</a>
+        <a href="#demo">Demo</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+
+      <div class="header-actions">
+        <a href="#demo" class="btn btn-ghost btn-sm">Launch Demo</a>
+        <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile nav -->
+  <nav class="nav-menu" id="navMenu" aria-label="Mobile">
+    <a href="#hero" class="active">Home</a>
+    <a href="#about">About</a>
+    <a href="#demo">Demo</a>
+    <a href="#faq">FAQ</a>
+    <div class="nav-menu-foot">
+      <span>ISRO / SAC · BAH 2026</span>
+    </div>
+  </nav>
+  <div class="nav-overlay" id="navOverlay" aria-hidden="true"></div>
+
+  <main>
+
+    <!-- ===================== HERO ===================== -->
+    <section class="hero" id="hero">
+      <canvas class="hero-canvas" id="particleCanvas" aria-hidden="true"></canvas>
+      <div class="hero-grid" aria-hidden="true"></div>
+
+      <div class="container hero-content">
+        <span class="hero-badge"><span class="badge-dot"></span> ISRO / SAC · BAH 2026</span>
+        <h1>
+          AI-driven <span class="highlight">Super-Resolution</span><br>
+          &amp; Thermal <span class="highlight">Colorization</span>
+        </h1>
+        <p class="hero-lead">
+          Upscaling Landsat 9 TIR imagery from 200m to 100m with generative AI — translating
+          monochrome thermal data into physically-consistent RGB composites for sharper Earth observation.
+        </p>
+
+        <div class="hero-actions">
+          <a href="#demo" class="btn btn-primary"><i class="fa-solid fa-satellite-dish"></i> Explore the Pipeline</a>
+          <a href="#about" class="btn btn-ghost">How it works</a>
+        </div>
+
+        <div class="hero-stats">
+          <div class="stat"><span class="stat-num">200m <i class="fa-solid fa-arrow-right"></i> 100m</span><span class="stat-label">Resolution Gain</span></div>
+          <div class="stat"><span class="stat-num">4×</span><span class="stat-label">Pixel Density</span></div>
+          <div class="stat"><span class="stat-num">ESRGAN + Diffusion</span><span class="stat-label">Model Stack</span></div>
+        </div>
+      </div>
+
+      <a href="#about" class="scroll-cue" aria-label="Scroll down">
+        <span class="mouse"><span class="wheel"></span></span>
+      </a>
+    </section>
+
+    <!-- ===================== ABOUT / PIPELINE ===================== -->
+    <section class="section" id="about">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="section-kicker">// The Framework</span>
+          <h2 class="section-title">The <span class="highlight">Pipeline</span></h2>
+          <p class="section-subtitle">A deep learning framework designed for the Space Applications Centre / ISRO — from raw thermal capture to exportable colorized GeoTIFFs.</p>
+        </div>
+
+        <div class="timeline">
+          <article class="timeline-item reveal">
+            <div class="tl-dot"></div>
+            <span class="tl-index">01</span>
+            <h3>Data Ingest</h3>
+            <p>Ingests low-resolution 200m single-channel Landsat 9 Band 10 (TIR) GeoTIFFs while preserving geospatial metadata, CRS, and affine transform.</p>
+          </article>
+
+          <article class="timeline-item reveal">
+            <div class="tl-dot"></div>
+            <span class="tl-index">02</span>
+            <h3>Super-Resolution</h3>
+            <p>Utilizes advanced generative AI (ESRGAN / SwinIR) to upscale structural details to 100m resolution, retaining thermal integrity and edge fidelity.</p>
+          </article>
+
+          <article class="timeline-item reveal">
+            <div class="tl-dot"></div>
+            <span class="tl-index">03</span>
+            <h3>Colorization (RGB Translation)</h3>
+            <p>Maps thermal signatures to realistic RGB representations using Pix2Pix / Diffusion models, enabling both human and AI interpretability.</p>
+          </article>
+
+          <article class="timeline-item reveal">
+            <div class="tl-dot"></div>
+            <span class="tl-index">04</span>
+            <h3>Geospatial Export</h3>
+            <p>Outputs fully colorized 100m GeoTIFFs with preserved CRS and transform, ready for overlay in QGIS or ArcGIS workflows.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== DEMO ===================== -->
+    <section class="section section-alt" id="demo">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="section-kicker">// Live Inference</span>
+          <h2 class="section-title">Live <span class="highlight">Inference</span></h2>
+          <p class="section-subtitle">Upload a Landsat 9 Band 10 TIR image (or pick a sample) to visualize the AI pipeline end-to-end.</p>
+        </div>
+
+        <div class="demo-card glass reveal">
+          <div class="demo-card-head">
+            <h3><i class="fa-solid fa-cloud-arrow-up"></i> Upload Thermal Image</h3>
+            <span class="demo-hint">.tif / .tiff / .png / .jpg</span>
+          </div>
+
+          <div class="upload-area" id="uploadArea" tabindex="0" role="button"
+               aria-label="Upload an image — click or drag and drop">
+            <input type="file" id="fileInput" accept=".tif,.tiff,.png,.jpg,.jpeg,image/*" hidden>
+            <div class="upload-inner">
+              <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+              <p class="upload-text">Drag &amp; drop or <span>browse</span> to upload</p>
+              <p class="upload-sub">No data leaves your browser in this demo</p>
+            </div>
+          </div>
+
+          <!-- Processing state -->
+          <div class="processing" id="processing" hidden>
+            <div class="proc-ring" aria-hidden="true"></div>
+            <div class="proc-text">
+              <span id="procLabel">Running super-resolution…</span>
+              <div class="proc-bar"><div class="proc-fill" id="procFill"></div></div>
+            </div>
+          </div>
+
+          <!-- Sample chips -->
+          <div class="samples" id="samples">
+            <span class="samples-label">Or try a sample:</span>
+            <button class="sample-chip" data-seed="thermal-1">Urban Heat</button>
+            <button class="sample-chip" data-seed="thermal-2">Ocean Front</button>
+            <button class="sample-chip" data-seed="thermal-3">Volcanic</button>
+            <button class="sample-chip" data-seed="thermal-4">Desert</button>
+          </div>
+        </div>
+
+        <!-- Results -->
+        <div class="results-wrap" id="resultsWrap" hidden>
+          <div class="section-head reveal">
+            <span class="section-kicker">// Output Results</span>
+            <h2 class="section-title">Generated <span class="highlight">Outputs</span></h2>
+          </div>
+
+          <div class="results-grid">
+            <figure class="result-card reveal">
+              <div class="result-img"><img id="imgOriginal" src="" alt="Original 200m TIR"></div>
+              <figcaption><span class="rc-tag">Input</span> Original 200m TIR</figcaption>
+            </figure>
+            <figure class="result-card reveal">
+              <div class="result-img"><img id="imgSR" src="" alt="Super-Resolved 100m"></div>
+              <figcaption><span class="rc-tag accent">AI</span> Super-Resolved 100m TIR</figcaption>
+            </figure>
+            <figure class="result-card reveal">
+              <div class="result-img"><img id="imgColor" src="" alt="Colorized RGB"></div>
+              <figcaption><span class="rc-tag accent">AI</span> Colorized 100m RGB</figcaption>
+            </figure>
+          </div>
+
+          <div class="compare-block reveal">
+            <div class="compare-head">
+              <h3><i class="fa-solid fa-sliders"></i> 3-Way Comparison</h3>
+              <div class="compare-legend">
+                <span><i class="dot"></i> Original</span>
+                <span><i class="dot mid"></i> Super-Resolved</span>
+                <span><i class="dot full"></i> Colorized</span>
+              </div>
+            </div>
+            <p class="compare-hint">Drag the handle horizontally to reveal Original, Super-Resolved, and Colorized layers.</p>
+
+            <div class="compare-container" id="compareContainer">
+              <div class="compare-layer" id="layerOriginal"><img id="compOriginal" src="" alt="Original layer"></div>
+              <div class="compare-layer" id="layerSR"><img id="compSR" src="" alt="SR layer"></div>
+              <div class="compare-layer" id="layerColor"><img id="compColor" src="" alt="Colorized layer"></div>
+              <div class="compare-handle" id="compareHandle" role="slider" aria-label="Comparison slider" tabindex="0">
+                <span class="handle-grip"><i class="fa-solid fa-left-right"></i></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Telemetry + downloads -->
+          <div class="results-actions reveal">
+            <div class="results-meta" id="resultsMeta" aria-live="polite"></div>
+            <div class="results-btns">
+              <a class="btn btn-primary btn-sm" id="downloadBtn" download style="display:none;">
+                <i class="fa-solid fa-image"></i> Download PNG
+              </a>
+              <a class="btn btn-ghost btn-sm" id="downloadTifBtn" download style="display:none;">
+                <i class="fa-solid fa-layer-group"></i> Download GeoTIFF
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== FAQ ===================== -->
+    <section class="section" id="faq">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="section-kicker">// Questions</span>
+          <h2 class="section-title">Frequently <span class="highlight">Asked</span></h2>
+          <p class="section-subtitle">Understanding the TIR super-resolution and colorization technology.</p>
+        </div>
+
+        <div class="faq-list">
+          <div class="faq-item reveal">
+            <button class="faq-question">
+              <span>What is Thermal Infrared (TIR) super-resolution?</span>
+              <i class="fa-solid fa-chevron-down faq-icon"></i>
+            </button>
+            <div class="faq-answer"><p>It is a deep learning process that enhances the spatial resolution of low-resolution thermal satellite images (200m) to higher resolution (100m) by predicting missing structural details while preserving the thermal intensity values.</p></div>
+          </div>
+
+          <div class="faq-item reveal">
+            <button class="faq-question">
+              <span>How does the colorization work without visible light data?</span>
+              <i class="fa-solid fa-chevron-down faq-icon"></i>
+            </button>
+            <div class="faq-answer"><p>Generative AI models (GANs/Diffusion) learn the mapping between thermal signatures and visible RGB textures. The model uses a large dataset of paired Landsat 9 TIR and RGB images to accurately assign colors to thermal features.</p></div>
+          </div>
+
+          <div class="faq-item reveal">
+            <button class="faq-question">
+              <span>What is the "Physics Informed" bonus?</span>
+              <i class="fa-solid fa-chevron-down faq-icon"></i>
+            </button>
+            <div class="faq-answer"><p>This approach integrates physical laws of blackbody radiation into the loss function of the neural network. It ensures the AI doesn't just generate colors, but the generated RGB values are physically consistent with the measured thermal radiation.</p></div>
+          </div>
+
+          <div class="faq-item reveal">
+            <button class="faq-question">
+              <span>Will the AI hallucinate fake structures?</span>
+              <i class="fa-solid fa-chevron-down faq-icon"></i>
+            </button>
+            <div class="faq-answer"><p>Our framework incorporates strict structural loss (SSIM) and perceptual constraints to prevent hallucinations. Every generated feature is grounded in the input thermal data, ensuring no artificial structures are invented.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <span class="logo-mark">⬢</span>
+        <div>
+          <strong>KEPLER<span class="logo-accent">404</span></strong>
+          <p>&copy; 2026 · ISRO / SAC Hackathon Prototype</p>
+        </div>
+      </div>
+      <div class="footer-links">
+        <a href="#about">Pipeline</a>
+        <a href="#demo">Demo</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <div class="social-links">
+        <a href="#" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+        <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
+        <a href="#" aria-label="X"><i class="fa-brands fa-x-twitter"></i></a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Floating controls -->
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <i class="fa-solid fa-moon"></i>
+  </button>
+  <button class="back-to-top" id="backToTop" aria-label="Back to top">
+    <i class="fa-solid fa-arrow-up"></i>
+  </button>
+
+  <!-- Toast host -->
+  <div class="toast-host" id="toastHost" aria-live="polite"></div>
+
+  <script src="static/js/script.js"></script>
+</body>
+</html>
