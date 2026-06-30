@@ -36,3 +36,7 @@ def __getattr__(name):  # PEP 562 — lazy public exports to avoid import cycles
         from .cli import main
         return main
     raise AttributeError(f"module 'kepler' has no attribute {name!r}")
+
+
+def __dir__():  # PEP 562 — make lazy exports visible to IDEs / dir()
+    return sorted(__all__)

@@ -86,8 +86,8 @@ class TestPipelineErrors:
             pipeline.run(tmp_path / "nonexistent.tif")
 
     def test_corrupt_file_raises(self, pipeline, tmp_path):
-        from kepler.exceptions import ProcessingError
+        from kepler.exceptions import DecodingError
         bad = tmp_path / "garbage.tif"
         bad.write_bytes(b"not a real file")
-        with pytest.raises(ProcessingError):
+        with pytest.raises(DecodingError):
             pipeline.run(bad)

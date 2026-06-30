@@ -31,18 +31,17 @@ class TestInferEndpoint:
         resp = self._upload_bytes(client, "readme.txt", b"hello world", "text/plain")
         assert resp.status_code == 415
 
-    def test_png_success(self, client, tmp_path):
-        buf = BytesIO()
-        Image.fromarray(np.random.randint(0, 255, (8, 8), dtype=np.uint8), "L").save(buf, "PNG")
-        buf.seek(0)
-        resp = self._upload_bytes(client, "sample.png", buf.getvalue())
+    def test_tif_success(self, client, tmp_path):
+        tif = make_geotiff(tmp_path / "scene.tif", 8, 8)
+        with open(tif, "rb") as f:
+            resp = self._upload_bytes(client, "scene.tif", f.read(), "image/tiff")
         assert resp.status_code == 200
         data = resp.json
         assert data["success"] is True
         assert "input" in data["images"]
         assert "sr" in data["images"]
         assert "colorized" in data["images"]
-        assert data["download_tif"] is None  # no CRS for PNG
+        assert data["download_tif"] is not None
 
     def test_geotiff_success(self, client, tmp_path):
         tif = make_geotiff(tmp_path / "scene.tif", 8, 8)
@@ -54,20 +53,20 @@ class TestInferEndpoint:
         assert data["download_tif"] is not None
         assert data["meta"]["file_type"] == "GeoTIFF"
 
-    def test_jpeg_success(self, client):
+    def test_wrong_extension_message(self, client):
         buf = BytesIO()
-        Image.fromarray(np.random.randint(0, 255, (8, 8, 3), dtype=np.uint8), "RGB").save(buf, "JPEG")
+        from PIL import Image
+        Image.fromarray(np.zeros((8, 8), dtype=np.uint8)).save(buf, "PNG")
         buf.seek(0)
         resp = self._upload_bytes(client, "photo.jpg", buf.getvalue(), "image/jpeg")
-        assert resp.status_code == 200
-        assert resp.json["success"] is True
+        assert resp.status_code == 415
+        assert "GeoTIFF" in resp.json["error"]
 
     def test_contract_keys(self, client, tmp_path):
         """Verify the exact frontend contract: success, images.*, download, download_tif, meta.*"""
-        buf = BytesIO()
-        Image.fromarray(np.zeros((8, 8), dtype=np.uint8), "L").save(buf, "PNG")
-        buf.seek(0)
-        resp = self._upload_bytes(client, "sample.png", buf.getvalue())
+        tif = make_geotiff(tmp_path / "scene.tif", 8, 8)
+        with open(tif, "rb") as f:
+            resp = self._upload_bytes(client, "scene.tif", f.read(), "image/tiff")
         d = resp.json
         # Top-level
         assert "success" in d
@@ -90,22 +89,20 @@ class TestInferEndpoint:
 
 class TestDownloadEndpoint:
     def test_download_existing_file(self, client, tmp_path):
-        # First infer a file to generate results
-        buf = BytesIO()
-        from PIL import Image
-        Image.fromarray(np.zeros((8, 8), dtype=np.uint8), "L").save(buf, "PNG")
-        buf.seek(0)
-        data = {"file": (BytesIO(buf.getvalue()), "sample.png", "image/png")}
-        resp = client.post("/api/infer", data=data, content_type="multipart/form-data")
+        # First infer a GeoTIFF to generate results
+        tif = make_geotiff(tmp_path / "scene.tif", 8, 8)
+        with open(tif, "rb") as f:
+            data = {"file": (BytesIO(f.read()), "scene.tif", "image/tiff")}
+            resp = client.post("/api/infer", data=data, content_type="multipart/form-data")
         d = resp.json
 
-        # Then download the PNG
-        png_name = d["images"]["colorized"].split("/")[-1]
-        dl = client.get(f"/api/download/{png_name}")
+        # Then download the colorized GeoTIFF
+        tif_name = d["download_tif"].split("/")[-1]
+        dl = client.get(f"/api/download/{tif_name}")
         assert dl.status_code == 200
 
     def test_download_nonexistent_404(self, client):
-        resp = client.get("/api/download/nope.png")
+        resp = client.get("/api/download/nonexistent.tif")
         assert resp.status_code == 404
 
     def test_download_bad_ext_400(self, client):

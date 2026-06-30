@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from kepler.cli import main
-from tests.conftest import make_geotiff, make_png
+from tests.conftest import make_geotiff
 
 
 class TestCLIInfer:
@@ -17,15 +17,7 @@ class TestCLIInfer:
         main(["infer", str(tif), "--out", str(out)])
         captured = capsys.readouterr()
         assert "processed" in captured.out.lower()
-        assert (out / "colorized.tif").exists()
-
-    def test_infer_png(self, tmp_path, capsys):
-        png = make_png(tmp_path / "photo.png", 8, 8)
-        out = tmp_path / "results"
-        main(["infer", str(png), "--out", str(out)])
-        captured = capsys.readouterr()
-        assert "processed" in captured.out.lower()
-        assert (out / "colorized.png").exists()
+        assert any(f.name.endswith("_colorized.tif") for f in out.iterdir())
 
     def test_infer_missing_file(self, tmp_path, capsys):
         with pytest.raises(SystemExit):
@@ -34,8 +26,8 @@ class TestCLIInfer:
 
 class TestCLIBatch:
     def test_batch_folder(self, tmp_path, capsys):
-        make_png(tmp_path / "a.png", 8, 8)
-        make_png(tmp_path / "b.jpg", 8, 8, color=True)
+        make_geotiff(tmp_path / "a.tif", 8, 8)
+        make_geotiff(tmp_path / "b.tif", 8, 8)
         make_geotiff(tmp_path / "c.tif", 8, 8)
         out = tmp_path / "results"
         main(["batch", str(tmp_path), "--out", str(out)])

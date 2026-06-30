@@ -10,7 +10,11 @@ import os
 import uuid
 from pathlib import Path
 
+import numpy as np
+import rasterio
 from flask import Blueprint, current_app, jsonify, request, send_from_directory
+from rasterio.crs import CRS
+from rasterio.transform import from_bounds
 
 from .config import Settings
 from .exceptions import (
@@ -58,7 +62,7 @@ def infer():
         return jsonify(
             {
                 "success": False,
-                "error": "Invalid file format. Please upload a .tif, .tiff, .png, .jpg, or .jpeg file.",
+                "error": "Invalid file format. Please upload a .tif or .tiff (GeoTIFF) file.",
             }
         ), 415
 
@@ -93,13 +97,62 @@ def infer():
 
 
 # ---------------------------------------------------------------------------
-# GET /api/download/<filename>
+# GET /api/sample/<seed>  — generate a synthetic GeoTIFF & run inference
+# ---------------------------------------------------------------------------
+@bp.route("/sample/<seed>")
+def sample(seed: str):
+    settings: Settings = current_app.config["KEPLER_SETTINGS"]
+    pipeline: Pipeline = current_app.config["KEPLER_PIPELINE"]
+
+    job_id = uuid.uuid4().hex
+    tif_path = settings.upload_dir / f"{job_id}.tif"
+    rng = np.random.default_rng(abs(hash(seed)) % (2**31))
+
+    width, height = 256, 256
+    band = rng.integers(40, 200, size=(height, width), dtype=np.uint8)
+
+    if "urban" in seed:
+        # Hot urban clusters
+        for _ in range(6):
+            cx, cy = rng.integers(30, width - 30, 2)
+            band[cy - 20:cy + 20, cx - 20:cx + 20] = rng.integers(210, 255, (40, 40), dtype=np.uint8)
+    elif "ocean" in seed:
+        # Temperature gradient
+        for y in range(height):
+            band[y, :] = np.clip(band[y, :].astype(np.int16) + int(80 * y / height), 0, 255).astype(np.uint8)
+    elif "volcanic" in seed:
+        # Hot center
+        cy, cx = height // 2, width // 2
+        for y in range(height):
+            for x in range(width):
+                dist = np.sqrt((x - cx)**2 + (y - cy)**2)
+                band[y, x] = np.clip(int(band[y, x]) + int(120 * max(0, 1 - dist / 100)), 0, 255).astype(np.uint8)
+    elif "desert" in seed:
+        # High base with dune ripples
+        band = rng.integers(180, 245, size=(height, width), dtype=np.uint8)
+        for y in range(height):
+            band[y, :] = np.clip(band[y, :].astype(np.int16) + int(15 * np.sin(y * 0.15)), 0, 255).astype(np.uint8)
+
+    transform = from_bounds(0.0, 0.0, 1.0, 1.0, width, height)
+    with rasterio.open(
+        tif_path, "w", driver="GTiff", height=height, width=width,
+        count=1, dtype="uint8", crs=CRS.from_epsg(4326), transform=transform,
+    ) as dst:
+        dst.write(band, 1)
+
+    log.info(f"sample generated: {seed} ({job_id[:8]})")
+    result = pipeline.run(tif_path, job_id)
+    return jsonify(result.to_dict())
+
+
+# ---------------------------------------------------------------------------
+# GET /api/download/<filename>  — only GeoTIFF downloads
 # ---------------------------------------------------------------------------
 @bp.route("/download/<filename>")
 def download(filename: str):
     settings: Settings = current_app.config["KEPLER_SETTINGS"]
     safe = Path(filename).name
-    if not safe.endswith((".png", ".tif", ".tiff")):
+    if not safe.endswith((".tif", ".tiff")):
         return jsonify({"success": False, "error": "Invalid download request."}), 400
 
     path = settings.results_dir / safe

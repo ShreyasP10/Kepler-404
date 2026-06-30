@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import logging
 import sys
-from typing import Optional
 
 _CONFIGURED = False
 
@@ -43,23 +42,6 @@ def get_logger(name: str) -> logging.Logger:
     if not name.startswith("kepler"):
         name = f"kepler.{name}"
     return logging.getLogger(name)
-
-
-def job_logger(job_id: str) -> logging.Logger:
-    """Return a logger whose messages are prefixed with the short job id."""
-    short = job_id[:8] if len(job_id) >= 8 else job_id
-    logger = logging.getLogger(f"kepler.pipeline.{short}")
-    if not logger.handlers:
-        handler = logging.StreamHandler(sys.stderr)
-        handler.setFormatter(
-            logging.Formatter(
-                fmt=f"%(asctime)s | %(levelname)-5s | kepler.pipeline | [{short}] %(message)s",
-                datefmt="%Y-%m-%d %H:%M:%S",
-            )
-        )
-        logger.addHandler(handler)
-        logger.propagate = False
-    return logger
 
 
 def reset_for_tests() -> None:

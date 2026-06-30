@@ -95,8 +95,13 @@ def normalize_to_uint8(array: np.ndarray) -> np.ndarray:
 # Write
 # ---------------------------------------------------------------------------
 def write_png(path: Path, gray: np.ndarray) -> None:
-    """Write a single-channel uint8 array as a PNG via OpenCV."""
-    cv2.imwrite(str(path), gray)
+    """Write a single-channel uint8 array as a PNG via OpenCV.
+
+    Raises RuntimeError if OpenCV fails to write the file.
+    """
+    success = cv2.imwrite(str(path), gray)
+    if not success:
+        raise RuntimeError(f"OpenCV failed to write PNG to {path}")
 
 
 def write_geotiff(

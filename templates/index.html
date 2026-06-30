@@ -150,12 +150,12 @@
         <div class="demo-card glass reveal">
           <div class="demo-card-head">
             <h3><i class="fa-solid fa-cloud-arrow-up"></i> Upload Thermal Image</h3>
-            <span class="demo-hint">.tif / .tiff / .png / .jpg</span>
+            <span class="demo-hint">.tif / .tiff only</span>
           </div>
 
           <div class="upload-area" id="uploadArea" tabindex="0" role="button"
                aria-label="Upload an image — click or drag and drop">
-            <input type="file" id="fileInput" accept=".tif,.tiff,.png,.jpg,.jpeg,image/*" hidden>
+            <input type="file" id="fileInput" accept=".tif,.tiff" hidden>
             <div class="upload-inner">
               <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
               <p class="upload-text">Drag &amp; drop or <span>browse</span> to upload</p>
@@ -195,12 +195,12 @@
               <figcaption><span class="rc-tag">Input</span> Original 200m TIR</figcaption>
             </figure>
             <figure class="result-card reveal">
-              <div class="result-img"><img id="imgSR" src="" alt="Super-Resolved 100m"></div>
-              <figcaption><span class="rc-tag accent">AI</span> Super-Resolved 100m TIR</figcaption>
+              <div class="result-img"><img id="imgSR" src="" alt="Super-Resolved 100m TIR"></div>
+              <figcaption><span class="rc-tag ai">AI</span> Super-Resolved 100m TIR</figcaption>
             </figure>
             <figure class="result-card reveal">
-              <div class="result-img"><img id="imgColor" src="" alt="Colorized RGB"></div>
-              <figcaption><span class="rc-tag accent">AI</span> Colorized 100m RGB</figcaption>
+              <div class="result-img"><img id="imgColor" src="" alt="Colorized 100m RGB"></div>
+              <figcaption><span class="rc-tag ai">AI</span> Colorized 100m RGB</figcaption>
             </figure>
           </div>
 
@@ -208,19 +208,25 @@
             <div class="compare-head">
               <h3><i class="fa-solid fa-sliders"></i> 3-Way Comparison</h3>
               <div class="compare-legend">
-                <span><i class="dot"></i> Original</span>
-                <span><i class="dot mid"></i> Super-Resolved</span>
+                <span><i class="dot"></i> 200m TIR</span>
+                <span><i class="dot mid"></i> 100m TIR</span>
                 <span><i class="dot full"></i> Colorized</span>
               </div>
             </div>
-            <p class="compare-hint">Drag the handle horizontally to reveal Original, Super-Resolved, and Colorized layers.</p>
+            <p class="compare-hint">Drag the two handles to reveal all three layers at once — Original 200m, Super-Resolved 100m, and Colorized RGB.</p>
 
             <div class="compare-container" id="compareContainer">
-              <div class="compare-layer" id="layerOriginal"><img id="compOriginal" src="" alt="Original layer"></div>
-              <div class="compare-layer" id="layerSR"><img id="compSR" src="" alt="SR layer"></div>
-              <div class="compare-layer" id="layerColor"><img id="compColor" src="" alt="Colorized layer"></div>
-              <div class="compare-handle" id="compareHandle" role="slider" aria-label="Comparison slider" tabindex="0">
-                <span class="handle-grip"><i class="fa-solid fa-left-right"></i></span>
+              <div class="compare-layer" id="layerOriginal"><img id="compOriginal" src="" alt="Original 200m TIR"></div>
+              <div class="compare-layer" id="layerSR"><img id="compSR" src="" alt="Super-Resolved 100m TIR"></div>
+              <div class="compare-layer" id="layerColor"><img id="compColor" src="" alt="Colorized RGB"></div>
+              <span class="compare-label label-left" id="labelLeft">200m TIR</span>
+              <span class="compare-label label-mid" id="labelMid">100m TIR</span>
+              <span class="compare-label label-right" id="labelRight">Colorized RGB</span>
+              <div class="compare-handle handle-1" id="handle1" role="slider" aria-label="Original / SR boundary" tabindex="0">
+                <span class="handle-grip"><i class="fa-solid fa-grip-lines"></i></span>
+              </div>
+              <div class="compare-handle handle-2" id="handle2" role="slider" aria-label="SR / Colorized boundary" tabindex="0">
+                <span class="handle-grip"><i class="fa-solid fa-grip-lines"></i></span>
               </div>
             </div>
           </div>
@@ -229,10 +235,7 @@
           <div class="results-actions reveal">
             <div class="results-meta" id="resultsMeta" aria-live="polite"></div>
             <div class="results-btns">
-              <a class="btn btn-primary btn-sm" id="downloadBtn" download style="display:none;">
-                <i class="fa-solid fa-image"></i> Download PNG
-              </a>
-              <a class="btn btn-ghost btn-sm" id="downloadTifBtn" download style="display:none;">
+              <a class="btn btn-primary btn-sm" id="downloadTifBtn" download style="display:none;">
                 <i class="fa-solid fa-layer-group"></i> Download GeoTIFF
               </a>
             </div>

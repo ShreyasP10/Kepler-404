@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 
 from flask import Flask, render_template, send_from_directory
+from flask_cors import CORS
 
 from .config import Settings
 from .logging_setup import configure_logging, get_logger
@@ -56,6 +57,9 @@ def create_app(settings: Settings | None = None) -> Flask:
     )
     app.config["KEPLER_SETTINGS"] = settings
     app.config["KEPLER_PIPELINE"] = Pipeline(settings)
+    app.config["MAX_CONTENT_LENGTH"] = settings.max_file_size
+
+    CORS(app)
 
     # --- Startup cleanup ---
     settings.ensure_dirs()

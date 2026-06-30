@@ -18,14 +18,13 @@ from rasterio.transform import Affine
 from .config import Settings
 from .exceptions import DecodingError, ProcessingError
 from .io import (
-    GeoReadResult,
     normalize_to_uint8,
     read_geotiff,
     read_image,
     write_geotiff,
     write_png,
 )
-from .logging_setup import job_logger
+from .logging_setup import get_logger
 from .models import FileType, ImageSet, InferenceResult, JobMeta
 from .transforms import colorize, super_resolve
 
@@ -45,8 +44,9 @@ class Pipeline:
         if job_id is None:
             job_id = uuid.uuid4().hex
 
-        log = job_logger(job_id)
-        log.info(f"ingest: {input_path.name}")
+        short_id = job_id[:8] if len(job_id) >= 8 else job_id
+        log = get_logger("pipeline")
+        log.info(f"[{short_id}] ingest: {input_path.name}")
 
         is_geo = self.settings.is_geotiff(input_path.name)
         start = time.perf_counter()
@@ -65,7 +65,7 @@ class Pipeline:
         elapsed = round(time.perf_counter() - start, 1)
         # Patch elapsed (delay may have run inside) — recompute honestly
         result.meta.elapsed = elapsed
-        log.info(f"complete: {elapsed}s total")
+        log.info(f"[{short_id}] complete: {elapsed}s total")
         return result
 
     # ------------------------------------------------------------------
@@ -74,10 +74,11 @@ class Pipeline:
     def _process_geotiff(
         self, path: Path, job_id: str, log
     ) -> InferenceResult:
+        short_id = job_id[:8] if len(job_id) >= 8 else job_id
         geo = read_geotiff(path)
         gray = normalize_to_uint8(geo.band)
         crs_label = str(geo.crs) if geo.crs else "Unknown"
-        log.info(f"ingest: GeoTIFF {geo.width}x{geo.height} (CRS {crs_label})")
+        log.info(f"[{short_id}] ingest: GeoTIFF {geo.width}x{geo.height} (CRS {crs_label})")
 
         stages = self._shared_stages(gray, job_id, log)
         sr_gray, colorized_bgr, input_png, sr_png, colorized_png = stages
@@ -89,7 +90,7 @@ class Pipeline:
         colorized_rgb = cv2.cvtColor(colorized_bgr, cv2.COLOR_BGR2RGB)
         tif_path = self.settings.results_dir / f"{job_id}_colorized.tif"
         write_geotiff(tif_path, colorized_rgb, geo.transform, geo.crs, new_transform)
-        log.info(f"export: georeferenced GeoTIFF written ({new_w}x{new_h})")
+        log.info(f"[{short_id}] export: georeferenced GeoTIFF written ({new_w}x{new_h})")
 
         return InferenceResult(
             job_id=job_id,
@@ -114,15 +115,16 @@ class Pipeline:
     # Image path — no georeferencing possible
     # ------------------------------------------------------------------
     def _process_image(self, path: Path, job_id: str, log) -> InferenceResult:
+        short_id = job_id[:8] if len(job_id) >= 8 else job_id
         gray = read_image(path)
         h, w = gray.shape[:2]
-        log.info(f"ingest: Image {w}x{h} (no CRS)")
+        log.info(f"[{short_id}] ingest: Image {w}x{h} (no CRS)")
 
         stages = self._shared_stages(gray, job_id, log)
         sr_gray, colorized_bgr, input_png, sr_png, colorized_png = stages
 
         new_h, new_w = sr_gray.shape
-        log.info(f"export: PNG outputs written ({new_w}x{new_h}), no GeoTIFF (no CRS)")
+        log.info(f"[{short_id}] export: PNG outputs written ({new_w}x{new_h}), no GeoTIFF (no CRS)")
 
         return InferenceResult(
             job_id=job_id,
@@ -150,6 +152,7 @@ class Pipeline:
         self, gray: np.ndarray, job_id: str, log
     ) -> tuple[np.ndarray, np.ndarray, Path, Path, Path]:
         """Run SR + colorize + write PNGs. Returns (sr, colorized, 3 paths)."""
+        short_id = job_id[:8] if len(job_id) >= 8 else job_id
         # Optional artificial latency (disabled in tests)
         if self.settings.mock_delay_seconds > 0:
             time.sleep(self.settings.mock_delay_seconds)
@@ -159,14 +162,14 @@ class Pipeline:
 
         t0 = time.perf_counter()
         sr_gray = super_resolve(gray)
-        log.info(f"super-resolve: {gray.shape[1]}x{gray.shape[0]} -> {sr_gray.shape[1]}x{sr_gray.shape[0]} in {time.perf_counter()-t0:.2f}s")
+        log.info(f"[{short_id}] super-resolve: {gray.shape[1]}x{gray.shape[0]} -> {sr_gray.shape[1]}x{sr_gray.shape[0]} in {time.perf_counter()-t0:.2f}s")
 
         sr_png = self.settings.results_dir / f"{job_id}_sr.png"
         write_png(sr_png, sr_gray)
 
         t0 = time.perf_counter()
         colorized_bgr = colorize(sr_gray)
-        log.info(f"colorize: {sr_gray.shape[1]}x{sr_gray.shape[0]} -> 3-channel in {time.perf_counter()-t0:.2f}s")
+        log.info(f"[{short_id}] colorize: {sr_gray.shape[1]}x{sr_gray.shape[0]} -> 3-channel in {time.perf_counter()-t0:.2f}s")
 
         colorized_png = self.settings.results_dir / f"{job_id}_colorized.png"
         write_png(colorized_png, colorized_bgr)

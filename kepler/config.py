@@ -59,7 +59,7 @@ class Settings:
             base_dir=base,
             upload_dir=base / _env_str("KEPLER_UPLOAD_DIR", "uploads"),
             results_dir=base / _env_str("KEPLER_RESULTS_DIR", "static/results"),
-            allowed_extensions=frozenset({".tif", ".tiff", ".png", ".jpg", ".jpeg"}),
+            allowed_extensions=frozenset({".tif", ".tiff"}),
             geotiff_extensions=frozenset({".tif", ".tiff"}),
             max_file_size=_env_int("KEPLER_MAX_FILE_SIZE", 50 * 1024 * 1024),
             retention_hours=_env_int("KEPLER_RETENTION_HOURS", 24),
@@ -76,7 +76,7 @@ class Settings:
             base_dir=tmp_root,
             upload_dir=tmp_root / "uploads",
             results_dir=tmp_root / "results",
-            allowed_extensions=frozenset({".tif", ".tiff", ".png", ".jpg", ".jpeg"}),
+            allowed_extensions=frozenset({".tif", ".tiff"}),
             geotiff_extensions=frozenset({".tif", ".tiff"}),
             max_file_size=50 * 1024 * 1024,
             retention_hours=None,            # never purge during tests

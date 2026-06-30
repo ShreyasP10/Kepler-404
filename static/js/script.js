@@ -365,29 +365,50 @@
       if (file) handleFile(file);
     });
 
-    // Sample chips — fetch the sample image and send it through the real backend
+    // Sample chips — request a synthetic GeoTIFF from the backend
     if (samples) {
       samples.querySelectorAll(".sample-chip").forEach((chip) => {
         chip.addEventListener("click", async () => {
           const seed = chip.dataset.seed;
-          try {
-            showToast("Fetching sample scene…", "fa-satellite");
-            const res = await fetch(`https://picsum.photos/seed/${seed}/900/600`);
-            const blob = await res.blob();
-            const file = new File([blob], `${seed}.png`, { type: "image/png" });
-            handleFile(file);
-          } catch (err) {
-            showToast("Could not load sample. Check your connection.", "fa-triangle-exclamation");
-          }
+          showToast("Generating sample scene…", "fa-satellite");
+          await handleSample(seed);
         });
       });
+    }
+
+    async function handleSample(seed) {
+      const formData = new FormData();
+      formData.append("seed", seed);
+
+      processing.hidden = false;
+      resultsWrap.hidden = false;
+      resultsWrap.classList.remove("visible");
+      procFill.style.width = "0%";
+      startProgress();
+
+      try {
+        const response = await fetch(`/api/sample/${seed}`);
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || "Sample generation failed.");
+        }
+        stopProgress();
+        procFill.style.width = "100%";
+        procLabel.textContent = "Sample complete!";
+        showResults(data);
+      } catch (err) {
+        stopProgress();
+        processing.hidden = true;
+        resultsWrap.hidden = true;
+        showToast("Error: " + err.message, "fa-triangle-exclamation");
+      }
     }
 
     /* Validate and route the file to the real backend pipeline */
     function handleFile(file) {
       if (!file) return;
-      if (!file.type.startsWith("image/") && !/\.(tif|tiff|png|jpe?g)$/i.test(file.name)) {
-        showToast("Please upload an image (.png/.jpg) or GeoTIFF (.tif).", "fa-triangle-exclamation");
+      if (!/\.tiff?$/i.test(file.name)) {
+        showToast("Please upload a GeoTIFF file (.tif / .tiff).", "fa-triangle-exclamation");
         return;
       }
       triggerBackendInference(file);
@@ -422,7 +443,8 @@
     /* Real end-to-end call to the Flask backend */
     async function triggerBackendInference(file) {
       processing.hidden = false;
-      resultsWrap.hidden = true;
+      resultsWrap.hidden = false;
+      resultsWrap.classList.remove("visible");
       procFill.style.width = "0%";
       startProgress();
 
@@ -497,8 +519,7 @@
       setSrc("compSR", cacheBust(data.images.sr));
       setSrc("compColor", cacheBust(data.images.colorized));
 
-      // Download buttons (optional — guarded so it works if absent)
-      setHref("downloadBtn", data.download);
+      // Download button (GeoTIFF only)
       setHref("downloadTifBtn", data.download_tif);
 
       // Telemetry line (optional)
@@ -517,13 +538,14 @@
       setTimeout(() => {
         processing.hidden = true;
         resultsWrap.hidden = false;
+        resultsWrap.classList.add("visible");
         showToast(
           meta.offline
             ? "Offline preview ready."
             : "Inference complete — real GeoTIFF processed."
         );
         setTimeout(() => resultsWrap.scrollIntoView({ behavior: prefersReduced ? "auto" : "smooth", block: "start" }), 80);
-        setTimeout(initCompareSlider, 150);
+        setTimeout(initCompareSlider, 200);
       }, 400);
     }
 
@@ -543,64 +565,110 @@
   }
 
   /* ============================================================
-     3-way comparison slider
+     3-way comparison slider — two handles, three sections
      ============================================================ */
   let compareBound = false;
   function initCompareSlider() {
     const container = document.getElementById("compareContainer");
-    const handle = document.getElementById("compareHandle");
+    const h1 = document.getElementById("handle1");
+    const h2 = document.getElementById("handle2");
     const layerColor = document.getElementById("layerColor");
     const layerSR = document.getElementById("layerSR");
-    if (!container || !handle || !layerColor || !layerSR || compareBound) return;
+    if (!container || !h1 || !h2 || !layerColor || !layerSR || compareBound) return;
     compareBound = true;
 
-    let pos = 0.34; // 0..1
-    let dragging = false;
+    // pos1 = boundary between Original & SR
+    // pos2 = boundary between SR & Colorized
+    let t1 = 0.33, t2 = 0.66;
+    let c1 = 0.33, c2 = 0.66;
+    let activeHandle = null;
+    let raf = null;
 
-    function updateMasks(x) {
-      pos = Math.min(1, Math.max(0, x));
-      const pct = pos * 100;
-      const pct2 = Math.min(100, pct + 34);
-      const colorMask = `linear-gradient(to right, black 0%, black ${pct}%, transparent ${pct}%, transparent 100%)`;
-      const srMask = `linear-gradient(to right, transparent 0%, transparent ${pct}%, black ${pct}%, black ${pct2}%, transparent ${pct2}%, transparent 100%)`;
+    function updateMasks(p1, p2) {
+      const pct1 = p1 * 100;
+      const pct2 = p2 * 100;
+      layerSR.style.webkitMaskImage = `linear-gradient(to right, transparent 0%, transparent ${pct1}%, black ${pct1}%, black ${pct2}%, transparent ${pct2}%, transparent 100%)`;
+      layerSR.style.maskImage = `linear-gradient(to right, transparent 0%, transparent ${pct1}%, black ${pct1}%, black ${pct2}%, transparent ${pct2}%, transparent 100%)`;
+      layerColor.style.webkitMaskImage = `linear-gradient(to right, transparent 0%, transparent ${pct2}%, black ${pct2}%, black 100%)`;
+      layerColor.style.maskImage = `linear-gradient(to right, transparent 0%, transparent ${pct2}%, black ${pct2}%, black 100%)`;
+      h1.style.left = pct1 + "%";
+      h2.style.left = pct2 + "%";
+    }
 
-      layerColor.style.webkitMaskImage = colorMask;
-      layerColor.style.maskImage = colorMask;
-      layerSR.style.webkitMaskImage = srMask;
-      layerSR.style.maskImage = srMask;
-      handle.style.left = pct + "%";
+    function animate() {
+      const d1 = t1 - c1, d2 = t2 - c2;
+      if (Math.abs(d1) > 0.001 || Math.abs(d2) > 0.001) {
+        c1 += d1 * 0.18;
+        c2 += d2 * 0.18;
+        updateMasks(c1, c2);
+        raf = requestAnimationFrame(animate);
+      } else {
+        c1 = t1; c2 = t2;
+        updateMasks(c1, c2);
+        raf = null;
+      }
+    }
+
+    function startSmooth() {
+      if (!raf) raf = requestAnimationFrame(animate);
     }
 
     function getPos(e) {
       const rect = container.getBoundingClientRect();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      return Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+      return (clientX - rect.left) / rect.width;
     }
 
-    // Pointer (mouse + touch unified)
-    handle.addEventListener("pointerdown", (e) => {
-      dragging = true;
-      handle.setPointerCapture(e.pointerId);
-    });
-    handle.addEventListener("pointermove", (e) => {
-      if (dragging) updateMasks(getPos(e));
-    });
-    handle.addEventListener("pointerup", () => (dragging = false));
-    handle.addEventListener("pointercancel", () => (dragging = false));
+    function setupHandle(handle, isFirst) {
+      handle.addEventListener("pointerdown", (e) => {
+        activeHandle = handle;
+        handle.setPointerCapture(e.pointerId);
+      });
+      document.addEventListener("pointermove", (e) => {
+        if (activeHandle !== handle) return;
+        const raw = getPos(e);
+        if (isFirst) {
+          t1 = Math.min(Math.max(0.02, raw), t2 - 0.04);
+        } else {
+          t2 = Math.max(Math.min(0.98, raw), t1 + 0.04);
+        }
+        startSmooth();
+      });
+      document.addEventListener("pointerup", () => { activeHandle = null; });
+      document.addEventListener("pointercancel", () => { activeHandle = null; });
 
-    // Click anywhere on container to move handle
+      handle.addEventListener("keydown", (e) => {
+        const step = 0.04;
+        if (e.key === "ArrowLeft") {
+          if (isFirst) t1 = Math.max(0.02, t1 - step);
+          else t2 = Math.max(t1 + 0.04, t2 - step);
+          startSmooth(); e.preventDefault();
+        }
+        if (e.key === "ArrowRight") {
+          if (isFirst) t1 = Math.min(t2 - 0.04, t1 + step);
+          else t2 = Math.min(0.98, t2 + step);
+          startSmooth(); e.preventDefault();
+        }
+      });
+    }
+
+    setupHandle(h1, true);
+    setupHandle(h2, false);
+
+    // Click anywhere to move nearest boundary
     container.addEventListener("click", (e) => {
-      if (e.target === handle || handle.contains(e.target)) return;
-      updateMasks(getPos(e));
+      if (e.target === h1 || e.target === h2 || h1.contains(e.target) || h2.contains(e.target)) return;
+      const x = getPos(e);
+      if (Math.abs(x - t1) <= Math.abs(x - t2)) {
+        t1 = Math.min(Math.max(0.02, x), t2 - 0.04);
+      } else {
+        t2 = Math.max(Math.min(0.98, x), t1 + 0.04);
+      }
+      startSmooth();
     });
 
-    // Keyboard support
-    handle.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowLeft") { updateMasks(pos - 0.05); e.preventDefault(); }
-      if (e.key === "ArrowRight") { updateMasks(pos + 0.05); e.preventDefault(); }
-    });
-
-    updateMasks(pos);
+    container.classList.add("loaded");
+    updateMasks(c1, c2);
   }
 
   /* ============================================================

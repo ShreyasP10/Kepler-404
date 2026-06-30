@@ -51,11 +51,11 @@ def make_png(path: Path, width: int = 32, height: int = 32, color: bool = False,
     rng = np.random.default_rng(seed)
     if color:
         arr = rng.integers(0, 255, size=(height, width, 3), dtype=np.uint8)
-        mode = "RGB"
+        img = Image.fromarray(arr)
     else:
         arr = rng.integers(0, 255, size=(height, width), dtype=np.uint8)
-        mode = "L"
-    Image.fromarray(arr, mode=mode).save(path)
+        img = Image.fromarray(arr)
+    img.save(path)
     return path
 
 
