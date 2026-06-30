@@ -4,4 +4,6 @@ rasterio
 opencv-python
 numpy
 pillow
-# torch  
+# torch
+# --- dev ---
+pytest
