@@ -8,7 +8,7 @@ Public API:
     from kepler import create_app, Pipeline, Settings, InferenceResult
 """
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 __all__ = [
     "__version__",
     "Settings",
